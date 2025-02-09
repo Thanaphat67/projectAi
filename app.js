@@ -1,47 +1,85 @@
-const express = require("express");
-const { MongoClient, ObjectId } = require("mongodb")
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
 
-let db;
-const client = new MongoClient("mongodb://localhost:27017");
-client.connect().then(() => {
-    db = client.db("project");
-    console.log("MongoDB connected")
-}).catch(() => {
-    console.log("MongoDB unconnect")
+// Middleware
+app.use(cors()); // เปิดใช้งาน CORS
+app.use(express.json()); // ให้ Express รองรับการรับ JSON
+
+// เชื่อมต่อ MongoDB
+mongoose.connect('mongodb://localhost:27017/project/project', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('MongoDB connected');
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
 });
 
+// กำหนด Schema สำหรับ Student
+const studentSchema = new mongoose.Schema({
+    name: String,
+    age: Number,
+    major: String
+});
 
-// ดึงข้อมูลทั้งหมด
+const Student = mongoose.model('Student', studentSchema);
+
+// GET: ดึงข้อมูลทั้งหมด
 app.get('/project', async (req, res) => {
-    const product = await db.collection("product").find().toArray();
-    res.json(product);
-});
-
-// ดึงข้อมูลรายการนั้น
-app.get('/project/:id', async (req, res) => {
     try {
-        const id = req.params.id;
-        const product = await db.collection("product").findOne({
-            "_id": new ObjectId(id)
-        });
-        res.json(product);
+        const students = await Student.find();
+        res.json(students); // ส่งข้อมูลทั้งหมดที่ดึงมาจาก MongoDB
     } catch (err) {
-        res.json("error");
+        console.error('Error fetching students:', err);
+        res.status(500).json({ message: 'Failed to fetch students' });
     }
 });
 
+// POST: เพิ่มข้อมูลนักศึกษา
 app.post('/project', async (req, res) => {
+    const { name, age, major } = req.body;
+    const newStudent = new Student({ name, age, major });
     try {
-        const data = req.body;
-        const product = await db.collection("product").inserto(data);
-        res.json(product);
-    }
-    catch (err) {
-        res.json("error");
+        await newStudent.save();
+        res.status(201).json({ message: 'Student added', student: newStudent });
+    } catch (err) {
+        console.error('Error adding student:', err);
+        res.status(500).json({ message: 'Failed to add student' });
     }
 });
 
+// PUT: แก้ไขข้อมูลนักศึกษา
+app.put('/project/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, age, major } = req.body;
+    try {
+        const updatedStudent = await Student.findByIdAndUpdate(
+            id, 
+            { name, age, major }, 
+            { new: true }
+        );
+        res.json({ message: 'Student updated', student: updatedStudent });
+    } catch (err) {
+        console.error('Error updating student:', err);
+        res.status(500).json({ message: 'Failed to update student' });
+    }
+});
+
+// DELETE: ลบข้อมูลนักศึกษา
+app.delete('/project/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await Student.findByIdAndDelete(id);
+        res.json({ message: 'Student deleted' });
+    } catch (err) {
+        console.error('Error deleting student:', err);
+        res.status(500).json({ message: 'Failed to delete student' });
+    }
+});
+
+// เริ่มต้นเซิร์ฟเวอร์ที่ port 3000
 app.listen(3000, () => {
-    console.log('Server started: success');
+    console.log('Server running on http://localhost:3000');
 });

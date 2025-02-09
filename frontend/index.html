@@ -8,9 +8,13 @@
     <script>
         
         async function fetchStudents() {
-            let res = await fetch('http://localhost:5000/students');
-            let students = await res.json();
-            displayStudents(students);
+            try {
+                let res = await fetch('http://localhost:3000/project');
+                let students = await res.json();
+                displayStudents(students);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+            }
         }
 
         
@@ -20,7 +24,7 @@
             
             if (students.length === 0) {
                 studentList.innerHTML = '';
-                message.textContent = 'ไม่มีข้อมูล';
+                message.textContent = 'ไม่มีข้อมูลนักศึกษา';
             } else {
                 studentList.innerHTML = students.map(s => 
                     `<li>
@@ -38,13 +42,26 @@
             let age = document.getElementById('age').value;
             let major = document.getElementById('major').value;
             
-            await fetch('http://localhost:5000/students', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, age, major })
-            });
-            
-            fetchStudents();
+            if (!name || !age || !major) {
+                alert('กรุณากรอกข้อมูลทั้งหมด');
+                return;
+            }
+
+            console.log('Adding student:', { name, age, major });
+
+            try {
+                let res = await fetch('http://localhost:3000/project', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, age, major })
+                });
+                let result = await res.json();
+                console.log('Response from server:', result);
+                fetchStudents(); 
+                resetForm(); 
+            } catch (error) {
+                console.error('Error adding student:', error);
+            }
         }
 
         
@@ -61,37 +78,65 @@
             let age = document.getElementById('age').value;
             let major = document.getElementById('major').value;
             
-            await fetch(`http://localhost:5000/students/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, age, major })
-            });
-            
-            fetchStudents();
+            if (!name || !age || !major) {
+                alert('กรุณากรอกข้อมูลทั้งหมด');
+                return;
+            }
+
+            try {
+                let res = await fetch(`http://localhost:3000/project/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, age, major })
+                });
+                let result = await res.json();
+                console.log('Response from server:', result);
+                fetchStudents(); 
+                resetForm(); 
+            } catch (error) {
+                console.error('Error updating student:', error);
+            }
         }
 
         
         async function searchStudent() {
             let query = document.getElementById('search').value.toLowerCase();
             
-            
             if (!query) {
                 alert("กรุณากรอกข้อมูล ชื่อ - นามสกุล");
                 return;
             }
-            
-            let res = await fetch('http://localhost:5000/students');
-            let students = await res.json();
-            let filteredStudents = students.filter(s => s.name.toLowerCase().includes(query));
-            displayStudents(filteredStudents);
+
+            try {
+                let res = await fetch('http://localhost:3000/project');
+                let students = await res.json();
+                let filteredStudents = students.filter(s => s.name.toLowerCase().includes(query));
+                displayStudents(filteredStudents);
+            } catch (error) {
+                console.error('Error searching student:', error);
+            }
         }
 
         
         async function deleteStudent(id) {
-            await fetch(`http://localhost:5000/students/${id}`, {
-                method: 'DELETE'
-            });
-            fetchStudents(); 
+            try {
+                let res = await fetch(`http://localhost:3000/project/${id}`, {
+                    method: 'DELETE'
+                });
+                let result = await res.json();
+                console.log('Student deleted:', result);
+                fetchStudents(); 
+            } catch (error) {
+                console.error('Error deleting student:', error);
+            }
+        }
+
+        
+        function resetForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('major').value = '';
+            document.getElementById('submitBtn').setAttribute('onclick', 'addStudent()');
         }
 
         fetchStudents(); 
