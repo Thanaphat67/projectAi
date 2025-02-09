@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <script>
+        
         async function fetchStudents() {
             let res = await fetch('http://localhost:5000/students');
             let students = await res.json();
             displayStudents(students);
         }
 
+        
         function displayStudents(students) {
             let studentList = document.getElementById('studentList');
             let message = document.getElementById('noResults');
@@ -18,13 +23,16 @@
                 message.textContent = 'ไม่มีข้อมูล';
             } else {
                 studentList.innerHTML = students.map(s => 
-                    `<li>${s.name} - ${s.major} 
+                    `<li>
+                        ${s.name} - ${s.major} 
                         <button onclick="editStudent('${s._id}', '${s.name}', ${s.age}, '${s.major}')">Edit</button>
+                        <button onclick="deleteStudent('${s._id}')">Delete</button>
                     </li>`).join('');
                 message.textContent = '';
             }
         }
 
+        
         async function addStudent() {
             let name = document.getElementById('name').value;
             let age = document.getElementById('age').value;
@@ -38,6 +46,7 @@
             
             fetchStudents();
         }
+
         
         function editStudent(id, name, age, major) {
             document.getElementById('name').value = name;
@@ -45,6 +54,7 @@
             document.getElementById('major').value = major;
             document.getElementById('submitBtn').setAttribute('onclick', `updateStudent('${id}')`);
         }
+
         
         async function updateStudent(id) {
             let name = document.getElementById('name').value;
@@ -59,31 +69,55 @@
             
             fetchStudents();
         }
+
         
         async function searchStudent() {
             let query = document.getElementById('search').value.toLowerCase();
+            
+            
+            if (!query) {
+                alert("กรุณากรอกข้อมูล ชื่อ - นามสกุล");
+                return;
+            }
+            
             let res = await fetch('http://localhost:5000/students');
             let students = await res.json();
             let filteredStudents = students.filter(s => s.name.toLowerCase().includes(query));
             displayStudents(filteredStudents);
         }
+
         
-        fetchStudents();
+        async function deleteStudent(id) {
+            await fetch(`http://localhost:5000/students/${id}`, {
+                method: 'DELETE'
+            });
+            fetchStudents(); 
+        }
+
+        fetchStudents(); 
     </script>
 </head>
 <body>
-    <img src="student.png" alt="student" width="300">
-    <h1>Student List</h1>
-    <h2>ป้อนชื่อ-สกุล เพื่อค้นหารายชื่อ</h2>
-    <input type="text" id="search" placeholder="Search by name">
-    <button onclick="searchStudent()">Search</button>
-    <p id="noResults" style="color: red;"></p>
-    <ul id="studentList"></ul>
-    
-    <h2>Add/Edit Student</h2>
-    <input type="text" id="name" placeholder="Name">
-    <input type="number" id="age" placeholder="Age">
-    <input type="text" id="major" placeholder="Major">
-    <button id="submitBtn" onclick="addStudent()">Submit</button>
+    <header>
+        <h1>Student Management System</h1>
+    </header>
+
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search by name" required />
+            <button onclick="searchStudent()">Search</button>
+        </div>
+        <p id="noResults" class="no-results"></p>
+        
+        <ul id="studentList"></ul>
+
+        <h2>Add/Edit Student</h2>
+        <div class="form-container">
+            <input type="text" id="name" placeholder="Name" required>
+            <input type="number" id="age" placeholder="Age" required>
+            <input type="text" id="major" placeholder="Major" required>
+            <button id="submitBtn" onclick="addStudent()">Submit</button>
+        </div>
+    </div>
 </body>
 </html>

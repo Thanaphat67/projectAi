@@ -5,7 +5,7 @@ const app = express();
 let db;
 const client = new MongoClient("mongodb://localhost:27017");
 client.connect().then(() => {
-    db = client.db("ecommerce");
+    db = client.db("project");
     console.log("MongoDB connected")
 }).catch(() => {
     console.log("MongoDB unconnect")
@@ -13,13 +13,13 @@ client.connect().then(() => {
 
 
 // ดึงข้อมูลทั้งหมด
-app.get('/product', async (req, res) => {
+app.get('/project', async (req, res) => {
     const product = await db.collection("product").find().toArray();
     res.json(product);
 });
 
 // ดึงข้อมูลรายการนั้น
-app.get('/product/:id', async (req, res) => {
+app.get('/project/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const product = await db.collection("product").findOne({
@@ -31,7 +31,7 @@ app.get('/product/:id', async (req, res) => {
     }
 });
 
-app.post('/product', async (req, res) => {
+app.post('/project', async (req, res) => {
     try {
         const data = req.body;
         const product = await db.collection("product").inserto(data);
